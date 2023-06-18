@@ -2,7 +2,6 @@ package com.sb.appWeb.service;
 
 import java.util.List;
 import java.util.Optional;
-
 import com.sb.appWeb.model.Producto;
 
 public interface ProductoService {
