@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.sb.appWeb.model.DetallePedido;
 import com.sb.appWeb.model.Pedido;
 import com.sb.appWeb.model.Producto;
+import com.sb.appWeb.model.Usuario;
+import com.sb.appWeb.service.IUsuarioService;
 import com.sb.appWeb.service.ProductoService;
 
 @Controller
@@ -29,6 +31,9 @@ public class HomeController {
 	@Autowired
 	private ProductoService productoService;
 
+	@Autowired
+	private IUsuarioService usuarioService;
+	
 	//para almacenar detalles del pedido
 	List<DetallePedido> detalle = new ArrayList<DetallePedido>();
 	
@@ -70,7 +75,13 @@ public class HomeController {
 		detallePedido.setTotal(producto.getPrecio()* cantidad);
 		detallePedido.setProducto(producto);
 		
-		detalle.add(detallePedido);
+		//validar que el producto no se añada 2 veces
+		Integer idProducto = producto.getId();
+		boolean ingresado = detalle.stream().anyMatch(p -> p.getProducto().getId()==idProducto);
+		
+		if(!ingresado) {
+			detalle.add(detallePedido);
+		}
 		
 		sumaTotal=detalle.stream().mapToDouble(dt->dt.getTotal()).sum();
 		
@@ -106,6 +117,25 @@ public class HomeController {
 		model.addAttribute("pedido", pedido);
 		
 		return "usuario/carrito";
+	}
+	
+	@GetMapping("/getCart")
+	public String getCart(Model model) {
+		
+		model.addAttribute("cart", detalle);
+		model.addAttribute("pedido", pedido);
+		return "/usuario/carrito";
+	}
+	
+	@GetMapping("/pedido")
+	public String pedido(Model model ) {
+		
+		Usuario usuario= usuarioService.findById(1).get();
+		
+		model.addAttribute("cart", detalle);
+		model.addAttribute("pedido", pedido);
+		model.addAttribute("usuario", usuario);
+		return "usuario/resumenpedido";
 	}
 	
 }
