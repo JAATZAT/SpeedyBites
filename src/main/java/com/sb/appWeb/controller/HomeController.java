@@ -1,8 +1,10 @@
 package com.sb.appWeb.controller;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,8 @@ import com.sb.appWeb.model.DetallePedido;
 import com.sb.appWeb.model.Pedido;
 import com.sb.appWeb.model.Producto;
 import com.sb.appWeb.model.Usuario;
+import com.sb.appWeb.service.IDetallePedidoService;
+import com.sb.appWeb.service.IPedidoService;
 import com.sb.appWeb.service.IUsuarioService;
 import com.sb.appWeb.service.ProductoService;
 
@@ -33,6 +37,12 @@ public class HomeController {
 
 	@Autowired
 	private IUsuarioService usuarioService;
+	
+	@Autowired
+	private IPedidoService pedidoService;
+	
+	@Autowired
+	private IDetallePedidoService detallePedidoService;
 	
 	//para almacenar detalles del pedido
 	List<DetallePedido> detalle = new ArrayList<DetallePedido>();
@@ -138,4 +148,37 @@ public class HomeController {
 		return "usuario/resumenpedido";
 	}
 	
+	//guardar el pedido
+	@GetMapping("/savePedido")
+	public String savePedido() {
+		Date fechaCreacion = new Date();
+		pedido.setFechaCreacion(fechaCreacion);
+		pedido.setNumero(pedidoService.generarNumeroPedido());
+		
+		//usuario
+		Usuario usuario = usuarioService.findById(1).get();
+		
+		pedido.setUsuario(usuario);
+		pedidoService.save(pedido);
+		
+		//guardar detalles
+		for (DetallePedido dt:detalle) {
+			dt.setPedido(pedido);
+			detallePedidoService.save(dt);
+		}
+		// limpiar lista y pedido
+		pedido = new Pedido();
+		detalle.clear();
+		
+		return "redirect:/";
+	}
+	
+	@PostMapping("/search")
+	public String searchProducto(@RequestParam String nombre, Model model) {
+		log.info("Nombre del producto: {}",nombre);
+		List<Producto> productos = productoService.findAll().stream().filter(p ->p.getNombre().contains(nombre)).collect(Collectors.toList());
+		model.addAttribute("productos", productos);
+		
+		return "usuario/home";
+	}
 }
