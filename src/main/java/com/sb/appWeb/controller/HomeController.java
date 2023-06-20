@@ -26,6 +26,8 @@ import com.sb.appWeb.service.IPedidoService;
 import com.sb.appWeb.service.IUsuarioService;
 import com.sb.appWeb.service.ProductoService;
 
+import jakarta.servlet.http.HttpSession;
+
 @Controller
 @RequestMapping("/")
 public class HomeController {
@@ -51,8 +53,15 @@ public class HomeController {
 	Pedido pedido = new Pedido();
 	
 	@GetMapping("")
-	public String home(Model model) {
+	public String home(Model model, HttpSession session) {
+		
+		log.info("Sesion del usuario: {}", session.getAttribute("idusuario"));
+		
 		model.addAttribute("productos", productoService.findAll());
+		
+		//session
+		model.addAttribute("sesion", session.getAttribute("idusuario"));
+		
 		return "usuario/home";
 	}
 	
@@ -130,17 +139,21 @@ public class HomeController {
 	}
 	
 	@GetMapping("/getCart")
-	public String getCart(Model model) {
+	public String getCart(Model model, HttpSession session) {
 		
 		model.addAttribute("cart", detalle);
 		model.addAttribute("pedido", pedido);
+
+		//session
+		model.addAttribute("sesion", session.getAttribute("idusuario"));
+		
 		return "/usuario/carrito";
 	}
 	
 	@GetMapping("/pedido")
-	public String pedido(Model model ) {
+	public String pedido(Model model, HttpSession session) {
 		
-		Usuario usuario= usuarioService.findById(1).get();
+		Usuario usuario= usuarioService.findById(Integer.parseInt(session.getAttribute("idusuario").toString())).get();
 		
 		model.addAttribute("cart", detalle);
 		model.addAttribute("pedido", pedido);
@@ -150,13 +163,13 @@ public class HomeController {
 	
 	//guardar el pedido
 	@GetMapping("/savePedido")
-	public String savePedido() {
+	public String savePedido(HttpSession session) {
 		Date fechaCreacion = new Date();
 		pedido.setFechaCreacion(fechaCreacion);
 		pedido.setNumero(pedidoService.generarNumeroPedido());
 		
 		//usuario
-		Usuario usuario = usuarioService.findById(1).get();
+		Usuario usuario = usuarioService.findById(Integer.parseInt(session.getAttribute("idusuario").toString())).get();
 		
 		pedido.setUsuario(usuario);
 		pedidoService.save(pedido);
